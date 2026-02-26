@@ -62,6 +62,11 @@ litellm:
     path: /metrics
 
 vllm:
+  persistence:
+    enabled: false
+    storageClass: ""
+    accessMode: ReadWriteOnce
+    size: 20Gi
   image:
     repository: vllm/vllm-openai
     pullPolicy: IfNotPresent

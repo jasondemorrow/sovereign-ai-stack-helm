@@ -1,0 +1,22 @@
+{{- if .Values.vllm.persistence.enabled -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-vllm-cache
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  accessModes:
+    - {{ .Values.vllm.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.vllm.persistence.size | quote }}
+{{- if .Values.vllm.persistence.storageClass }}
+{{- if (eq "-" .Values.vllm.persistence.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.vllm.persistence.storageClass }}"
+{{- end }}
+{{- end }}
+{{- end }}

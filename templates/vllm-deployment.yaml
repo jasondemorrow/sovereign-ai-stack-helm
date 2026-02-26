@@ -44,7 +44,7 @@ spec:
             - name: USER
               value: "vllm"
             - name: HF_HOME
-              value: "/tmp/huggingface"
+              value: "/.cache/huggingface"
             {{- if .Values.vllm.extraEnv }}
             {{- toYaml .Values.vllm.extraEnv | nindent 12 }}
             {{- end }}
@@ -65,10 +65,15 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-            - name: cache
-              mountPath: /.cache
+            - name: hf-cache
+              mountPath: /.cache/huggingface
       volumes:
         - name: tmp
           emptyDir: {}
-        - name: cache
+        - name: hf-cache
+          {{- if .Values.vllm.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "sovereign-ai-gateway.fullname" . }}-vllm-cache
+          {{- else }}
           emptyDir: {}
+          {{- end }}
