@@ -1,0 +1,19 @@
+{{- if .Values.vllm.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-vllm
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  endpoints:
+    - port: http
+      path: {{ .Values.vllm.serviceMonitor.path }}
+      interval: 15s
+{{- end }}

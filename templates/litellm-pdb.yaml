@@ -1,0 +1,15 @@
+{{- if .Values.litellm.pdb.create }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-litellm
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  minAvailable: {{ .Values.litellm.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

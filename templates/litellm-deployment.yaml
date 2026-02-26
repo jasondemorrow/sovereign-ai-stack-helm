@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-litellm
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.litellm.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- if .Values.litellm.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.litellm.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if .Values.litellm.affinity }}
+      affinity:
+        {{- toYaml .Values.litellm.affinity | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: litellm
+          image: "{{ .Values.litellm.image.repository }}:{{ .Values.litellm.image.tag }}"
+          imagePullPolicy: {{ .Values.litellm.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 4000
+              protocol: TCP
+          {{- if .Values.litellm.securityContext }}
+          securityContext:
+            {{- toYaml .Values.litellm.securityContext | nindent 12 }}
+          {{- end }}
+          {{- if .Values.litellm.probes }}
+          {{- toYaml .Values.litellm.probes | nindent 10 }}
+          {{- end }}
+          env:
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: litellm-secrets
+                  key: master-key
+                  optional: true # Ideally provisioned alongside the deployment
+            {{- if .Values.litellm.extraEnv }}
+            {{- toYaml .Values.litellm.extraEnv | nindent 12 }}
+            {{- end }}
+          # Assuming proper routing config is dynamically pulled or injected via configmap, 
+          # otherwise, simple explicit routing pointing to our internal clusterIP service
+          args:
+            - "--config"
+            - "/config/config.yaml"
+          volumeMounts:
+            - name: litellm-config
+              mountPath: /config
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: litellm-config
+          configMap:
+            name: {{ include "sovereign-ai-gateway.fullname" . }}-litellm-config
+        - name: tmp
+          emptyDir: {}

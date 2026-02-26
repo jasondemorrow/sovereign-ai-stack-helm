@@ -1,0 +1,21 @@
+{{- if .Values.litellm.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-litellm
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    # This label convention is commonly used by kube-prometheus-stack 
+    # to identify which monitors to scrape (can be overridden via prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues).
+    release: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  endpoints:
+    - port: http
+      path: {{ .Values.litellm.serviceMonitor.path }}
+      interval: 15s
+{{- end }}

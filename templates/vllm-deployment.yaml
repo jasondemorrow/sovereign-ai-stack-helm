@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-vllm
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.vllm.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- if .Values.vllm.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.vllm.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if .Values.vllm.affinity }}
+      affinity:
+        {{- toYaml .Values.vllm.affinity | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: vllm
+          image: "{{ .Values.vllm.image.repository }}:{{ .Values.vllm.image.tag }}"
+          imagePullPolicy: {{ .Values.vllm.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          {{- if .Values.vllm.securityContext }}
+          securityContext:
+            {{- toYaml .Values.vllm.securityContext | nindent 12 }}
+          {{- end }}
+          {{- if .Values.vllm.probes }}
+          {{- toYaml .Values.vllm.probes | nindent 10 }}
+          {{- end }}
+          env:
+            - name: USER
+              value: "vllm"
+            - name: HF_HOME
+              value: "/tmp/huggingface"
+            {{- if .Values.vllm.extraEnv }}
+            {{- toYaml .Values.vllm.extraEnv | nindent 12 }}
+            {{- end }}
+          args:
+            - "--model"
+            - {{ .Values.vllm.modelName | quote }}
+            {{- if and .Values.vllm.device (ne .Values.vllm.device "auto") }}
+            - "--device"
+            - {{ .Values.vllm.device | quote }}
+            {{- end }}
+            {{- if .Values.vllm.extraArgs }}
+            {{- range .Values.vllm.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.vllm.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /.cache
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
