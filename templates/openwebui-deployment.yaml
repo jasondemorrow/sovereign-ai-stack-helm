@@ -18,10 +18,22 @@ spec:
         app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      {{- if .Values.openwebui.podSecurityContext }}
+      securityContext:
+        {{- toYaml .Values.openwebui.podSecurityContext | nindent 8 }}
+      {{- end }}
+      {{- if .Values.openwebui.affinity }}
+      affinity:
+        {{- toYaml .Values.openwebui.affinity | nindent 8 }}
+      {{- end }}
       containers:
         - name: openwebui
           image: "{{ .Values.openwebui.image.repository }}:{{ .Values.openwebui.image.tag }}"
           imagePullPolicy: {{ .Values.openwebui.image.pullPolicy }}
+          {{- if .Values.openwebui.securityContext }}
+          securityContext:
+            {{- toYaml .Values.openwebui.securityContext | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: 8080
@@ -44,6 +56,19 @@ spec:
             - name: VECTOR_DB
               value: "pgvector"
             {{- end }}
+          {{- if .Values.openwebui.probes }}
+          {{- toYaml .Values.openwebui.probes | nindent 10 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.openwebui.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: openwebui-home
+              mountPath: /app/backend/data
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: openwebui-home
+          emptyDir: {}
 {{- end }}

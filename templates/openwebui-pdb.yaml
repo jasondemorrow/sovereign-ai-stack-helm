@@ -1,0 +1,15 @@
+{{- if and .Values.openwebui.enabled .Values.openwebui.pdb.create }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-openwebui
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  minAvailable: {{ .Values.openwebui.pdb.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

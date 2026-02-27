@@ -58,7 +58,18 @@ litellm:
     create: true
     minAvailable: 1
 
-  affinity: {}
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - sovereign-ai-gateway-litellm
+          topologyKey: kubernetes.io/hostname
 
   serviceMonitor:
     enabled: true
@@ -92,6 +103,15 @@ backends:
       size: 10Gi
       storageClass: ""
       accessMode: ReadWriteOnce
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
     extraArgs: []
     probes:
       startupProbe:
@@ -116,7 +136,18 @@ backends:
     pdb:
       create: true
       minAvailable: 1
-    affinity: {}
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - sovereign-ai-gateway-vllm-guardrail
+            topologyKey: kubernetes.io/hostname
     networkPolicy:
       enabled: true
     serviceMonitor:
@@ -168,6 +199,46 @@ openwebui:
     targetMemoryUtilizationPercentage: 80
   networkPolicy:
     enabled: true
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+      - ALL
+  probes:
+    livenessProbe:
+      httpGet:
+        path: /health
+        port: http
+      initialDelaySeconds: 15
+      periodSeconds: 20
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: http
+      initialDelaySeconds: 10
+      periodSeconds: 10
+  pdb:
+    create: true
+    minAvailable: 1
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+              - sovereign-ai-gateway-openwebui
+          topologyKey: kubernetes.io/hostname
+  serviceMonitor:
+    enabled: true
+    path: /metrics
 
 observability:
   enabled: true
