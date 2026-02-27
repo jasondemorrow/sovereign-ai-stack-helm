@@ -54,7 +54,7 @@ spec:
                   {{- end }}
             {{- if .Values.postgresql.enabled }}
             - name: DATABASE_URL
-              value: "postgresql://litellm:{{ .Values.postgresql.auth.litellmPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-pooler-rw:5432/litellm_finops"
+              value: "postgresql://app_user:{{ .Values.postgresql.auth.dbPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-pooler:5432/sovereign_ai"
             {{- end }}
             {{- if .Values.litellm.extraEnv }}
             {{- toYaml .Values.litellm.extraEnv | nindent 12 }}
@@ -69,9 +69,13 @@ spec:
               mountPath: /config
             - name: tmp
               mountPath: /tmp
+            - name: cache
+              mountPath: /.cache
       volumes:
         - name: litellm-config
           configMap:
             name: {{ include "sovereign-ai-gateway.fullname" . }}-litellm-config
         - name: tmp
+          emptyDir: {}
+        - name: cache
           emptyDir: {}

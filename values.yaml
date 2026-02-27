@@ -159,8 +159,7 @@ postgresql:
   instances: 1
   image: "ghcr.io/cloudnative-pg/postgresql:16.4"
   auth:
-    litellmPassword: "secure-litellm-db-password"
-    webuiPassword: "secure-webui-db-password"
+    dbPassword: "secure-app-password"
   resources:
     limits:
       cpu: "1"

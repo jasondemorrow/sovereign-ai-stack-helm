@@ -51,8 +51,6 @@ spec:
             {{- toYaml .extraEnv | nindent 12 }}
             {{- end }}
           args:
-            - "--model"
-            - {{ .modelName | quote }}
             {{- if and .device (ne .device "auto") }}
             - "--device"
             - {{ .device | quote }}

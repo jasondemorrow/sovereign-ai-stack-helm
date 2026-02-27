@@ -11,10 +11,10 @@ spec:
   imageName: {{ .Values.postgresql.image }}
   bootstrap:
     initdb:
-      database: litellm_finops
-      owner: litellm
+      database: sovereign_ai
+      owner: app_user
       secret:
-        name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-litellm-secret
+        name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-app-secret
       postInitApplicationSQLRefs:
         secretRefs:
           - name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-init-sql
