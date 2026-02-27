@@ -11,6 +11,6 @@ data:
       - model_name: default-model
         litellm_params:
           # This maps to the vLLM OpenAI-compatible endpoint
-          model: openai/{{ .Values.vllm.modelName }}
+          model: openai/{{ .Values.litellm.backendModel | default .Values.vllm.modelName | default "default-model" }}
           api_base: "http://{{ include "sovereign-ai-gateway.fullname" . }}-vllm:{{ .Values.vllm.service.port }}/v1"
           api_key: "sk-fake-key-because-vllm-is-internal"
