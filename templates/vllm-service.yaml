@@ -1,17 +1,20 @@
+{{- range .Values.backends }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "sovereign-ai-gateway.fullname" . }}-vllm
+  name: {{ include "sovereign-ai-gateway.fullname" $ }}-vllm-{{ .name }}
   labels:
-    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" $ }}-vllm-{{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
 spec:
-  type: {{ .Values.vllm.service.type }}
+  type: {{ .service.type }}
   ports:
-    - port: {{ .Values.vllm.service.port }}
+    - port: {{ .service.port }}
       targetPort: http
       protocol: TCP
       name: http
   selector:
-    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" $ }}-vllm-{{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
+{{- end }}

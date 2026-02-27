@@ -8,9 +8,11 @@ metadata:
 data:
   config.yaml: |
     model_list:
-      - model_name: default-model
+{{- range .Values.backends }}
+      - model_name: {{ .name }}
         litellm_params:
-          # This maps to the vLLM OpenAI-compatible endpoint
-          model: openai/{{ .Values.litellm.backendModel | default .Values.vllm.modelName | default "default-model" }}
-          api_base: "http://{{ include "sovereign-ai-gateway.fullname" . }}-vllm:{{ .Values.vllm.service.port }}/v1"
+          # This maps to the vLLM OpenAI-compatible endpoint for this specific model alias
+          model: openai/{{ .modelName }}
+          api_base: "http://{{ include "sovereign-ai-gateway.fullname" $ }}-vllm-{{ .name }}:{{ .service.port }}/v1"
           api_key: "sk-fake-key-because-vllm-is-internal"
+{{- end }}

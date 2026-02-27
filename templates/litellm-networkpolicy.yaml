@@ -44,7 +44,7 @@ spec:
               app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-postgres
       ports:
         - protocol: TCP
-          port: {{ .Values.postgresql.service.port }}
+          port: 5432
     # Allow cluster-internal DNS
     - to:
         - namespaceSelector: {}

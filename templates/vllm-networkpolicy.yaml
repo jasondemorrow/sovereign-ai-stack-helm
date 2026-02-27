@@ -1,27 +1,29 @@
-{{- if .Values.vllm.networkPolicy.enabled }}
+{{- range .Values.backends }}
+{{- if .networkPolicy.enabled }}
+---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "sovereign-ai-gateway.fullname" . }}-vllm-isolation
+  name: {{ include "sovereign-ai-gateway.fullname" $ }}-vllm-isolation-{{ .name }}
   labels:
-    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" $ }}-vllm-{{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" $ }}-vllm-{{ .name }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
   policyTypes:
     - Ingress
   ingress:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
-              app.kubernetes.io/instance: {{ .Release.Name }}
+              app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" $ }}-litellm
+              app.kubernetes.io/instance: {{ $.Release.Name }}
       ports:
         - protocol: TCP
-          port: 8000
+          port: {{ .service.port }}
     - from:
         # Allow Prometheus operator to scrape metrics
         - namespaceSelector: {}
@@ -30,5 +32,6 @@ spec:
               app.kubernetes.io/name: prometheus
       ports:
         - protocol: TCP
-          port: 8000
+          port: {{ .service.port }}
+{{- end }}
 {{- end }}

@@ -44,9 +44,18 @@ spec:
             - name: LITELLM_MASTER_KEY
               valueFrom:
                 secretKeyRef:
+                  {{- if .Values.sharedSecret.enabled }}
+                  name: {{ include "sovereign-ai-gateway.fullname" . }}-shared-secret
+                  key: token
+                  {{- else }}
                   name: litellm-secrets
                   key: master-key
-                  optional: true # Ideally provisioned alongside the deployment
+                  optional: true
+                  {{- end }}
+            {{- if .Values.postgresql.enabled }}
+            - name: DATABASE_URL
+              value: "postgresql://litellm:{{ .Values.postgresql.auth.litellmPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-pooler-rw:5432/litellm_finops"
+            {{- end }}
             {{- if .Values.litellm.extraEnv }}
             {{- toYaml .Values.litellm.extraEnv | nindent 12 }}
             {{- end }}

@@ -1,0 +1,29 @@
+{{- if and .Values.openwebui.enabled .Values.openwebui.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-openwebui
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "sovereign-ai-gateway.fullname" . }}-openwebui
+  minReplicas: {{ .Values.openwebui.hpa.minReplicas }}
+  maxReplicas: {{ .Values.openwebui.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.openwebui.hpa.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.openwebui.hpa.targetMemoryUtilizationPercentage }}
+{{- end }}

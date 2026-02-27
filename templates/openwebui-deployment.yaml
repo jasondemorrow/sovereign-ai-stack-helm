@@ -1,0 +1,49 @@
+{{- if .Values.openwebui.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-openwebui
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.openwebui.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: openwebui
+          image: "{{ .Values.openwebui.image.repository }}:{{ .Values.openwebui.image.tag }}"
+          imagePullPolicy: {{ .Values.openwebui.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: OPENAI_API_BASE_URL
+              value: "http://{{ include "sovereign-ai-gateway.fullname" . }}-litellm:{{ .Values.litellm.service.port }}/v1"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sovereign-ai-gateway.fullname" . }}-shared-secret
+                  key: token
+                  optional: true
+            {{- if .Values.postgresql.enabled }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-webui-secret
+                  key: uri
+            - name: VECTOR_DB
+              value: "pgvector"
+            {{- end }}
+          resources:
+            {{- toYaml .Values.openwebui.resources | nindent 12 }}
+{{- end }}

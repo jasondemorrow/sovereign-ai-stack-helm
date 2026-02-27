@@ -1,22 +1,25 @@
-{{- if .Values.vllm.persistence.enabled -}}
+{{- range .Values.backends }}
+{{- if .persistence.enabled }}
+---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ include "sovereign-ai-gateway.fullname" . }}-vllm-cache
+  name: {{ include "sovereign-ai-gateway.fullname" $ }}-vllm-cache-{{ .name }}
   labels:
-    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-vllm
-    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" $ }}-vllm-{{ .name }}
+    app.kubernetes.io/instance: {{ $.Release.Name }}
 spec:
   accessModes:
-    - {{ .Values.vllm.persistence.accessMode | quote }}
+    - {{ .persistence.accessMode | quote }}
   resources:
     requests:
-      storage: {{ .Values.vllm.persistence.size | quote }}
-{{- if .Values.vllm.persistence.storageClass }}
-{{- if (eq "-" .Values.vllm.persistence.storageClass) }}
+      storage: {{ .persistence.size | quote }}
+  {{- if .persistence.storageClass }}
+  {{- if (eq "-" .persistence.storageClass) }}
   storageClassName: ""
-{{- else }}
-  storageClassName: "{{ .Values.vllm.persistence.storageClass }}"
-{{- end }}
+  {{- else }}
+  storageClassName: "{{ .persistence.storageClass }}"
+  {{- end }}
+  {{- end }}
 {{- end }}
 {{- end }}

@@ -1,0 +1,45 @@
+{{- if .Values.postgresql.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  instances: {{ .Values.postgresql.instances }}
+  imageName: {{ .Values.postgresql.image }}
+  bootstrap:
+    initdb:
+      database: litellm_finops
+      owner: litellm
+      secret:
+        name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-litellm-secret
+      postInitApplicationSQLRefs:
+        secretRefs:
+          - name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-init-sql
+            key: init.sql
+
+  resources:
+    {{- toYaml .Values.postgresql.resources | nindent 4 }}
+  storage:
+    size: {{ .Values.postgresql.persistence.size }}
+    {{- if .Values.postgresql.persistence.storageClass }}
+    storageClass: {{ .Values.postgresql.persistence.storageClass }}
+    {{- end }}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Pooler
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres-pooler
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-postgres
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  cluster:
+    name: {{ include "sovereign-ai-gateway.fullname" . }}-postgres
+  instances: {{ .Values.postgresql.instances }}
+  type: rw
+  pgbouncer:
+    poolMode: transaction
+{{- end }}
