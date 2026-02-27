@@ -1,0 +1,59 @@
+{{- if .Values.litellm.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "sovereign-ai-gateway.fullname" . }}-litellm-isolation
+  labels:
+    app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow the Open WebUI to submit chat completions
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-openwebui
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.litellm.service.port }}
+    # Allow end-user direct network access if WebUI is bypassed
+    - {}
+  egress:
+    # Allow communication to all provisioned internal vLLM/Llama backend pods
+    - to:
+        - podSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  {{- range .Values.backends }}
+                  - {{ include "sovereign-ai-gateway.name" $ }}-vllm-{{ .name }}
+                  {{- end }}
+    # Allow communication to internal Postgres for FinOps DB tracking
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-postgres
+      ports:
+        - protocol: TCP
+          port: {{ .Values.postgresql.service.port }}
+    # Allow cluster-internal DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+{{- end }}
