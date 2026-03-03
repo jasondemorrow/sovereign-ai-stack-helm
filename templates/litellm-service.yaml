@@ -6,9 +6,9 @@ metadata:
     app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  type: {{ .Values.litellm.service.type }}
+  type: {{ if .Values.litellm.service }}{{ default "ClusterIP" .Values.litellm.service.type }}{{ else }}ClusterIP{{ end }}
   ports:
-    - port: {{ .Values.litellm.service.port }}
+    - port: {{ if .Values.litellm.service }}{{ default 4000 .Values.litellm.service.port }}{{ else }}4000{{ end }}
       targetPort: http
       protocol: TCP
       name: http
