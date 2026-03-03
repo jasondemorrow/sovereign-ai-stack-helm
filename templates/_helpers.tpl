@@ -22,3 +22,29 @@ If release name contains chart name it will be used as a full name.
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+LiteLLM Defaults Merger
+Provides a safe, fully-populated litellm object by deeply merging .Values.litellm onto defaults.
+Usage: {{- $litellm := include "sovereign-ai-gateway.litellm" . | fromYaml -}}
+*/}}
+{{- define "sovereign-ai-gateway.litellm.defaults" -}}
+replicaCount: 1
+service:
+  type: ClusterIP
+  port: 4000
+serviceMonitor:
+  enabled: false
+  path: /metrics
+networkPolicy:
+  enabled: false
+pdb:
+  create: false
+  minAvailable: 1
+{{- end -}}
+
+{{- define "sovereign-ai-gateway.litellm" -}}
+{{- $defaults := include "sovereign-ai-gateway.litellm.defaults" . | fromYaml -}}
+{{- $merged := mergeOverwrite $defaults (default dict .Values.litellm) -}}
+{{- $merged | toYaml -}}
+{{- end -}}

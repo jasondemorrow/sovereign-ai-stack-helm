@@ -1,3 +1,4 @@
+{{- $litellm := include "sovereign-ai-gateway.litellm" . | fromYaml -}}
 {{- if .Values.openwebui.enabled }}
 apiVersion: apps/v1
 kind: Deployment
@@ -42,7 +43,7 @@ spec:
             - name: WEBUI_SECRET_KEY
               value: "super-secure-testing-secret-key"
             - name: OPENAI_API_BASE_URL
-              value: "http://{{ include "sovereign-ai-gateway.fullname" . }}-litellm:{{ if .Values.litellm.service }}{{ default 4000 .Values.litellm.service.port }}{{ else }}4000{{ end }}/v1"
+              value: "http://{{ include "sovereign-ai-gateway.fullname" . }}-litellm:{{ $litellm.service.port }}/v1"
             - name: OPENAI_API_KEY
               valueFrom:
                 secretKeyRef:

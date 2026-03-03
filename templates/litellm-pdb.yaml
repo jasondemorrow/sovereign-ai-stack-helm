@@ -1,4 +1,5 @@
-{{- if .Values.litellm.pdb.create }}
+{{- $litellm := include "sovereign-ai-gateway.litellm" . | fromYaml -}}
+{{- if $litellm.pdb.create }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -7,7 +8,7 @@ metadata:
     app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  minAvailable: {{ .Values.litellm.pdb.minAvailable }}
+  minAvailable: {{ $litellm.pdb.minAvailable }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm

@@ -1,3 +1,4 @@
+{{- $litellm := include "sovereign-ai-gateway.litellm" . | fromYaml -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,9 +7,9 @@ metadata:
     app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-litellm
     app.kubernetes.io/instance: {{ .Release.Name }}
 spec:
-  type: {{ if .Values.litellm.service }}{{ default "ClusterIP" .Values.litellm.service.type }}{{ else }}ClusterIP{{ end }}
+  type: {{ $litellm.service.type }}
   ports:
-    - port: {{ if .Values.litellm.service }}{{ default 4000 .Values.litellm.service.port }}{{ else }}4000{{ end }}
+    - port: {{ $litellm.service.port }}
       targetPort: http
       protocol: TCP
       name: http

@@ -1,4 +1,5 @@
-{{- if (hasKey .Values.litellm "serviceMonitor") }}{{- if .Values.litellm.serviceMonitor.enabled }}
+{{- $litellm := include "sovereign-ai-gateway.litellm" . | fromYaml -}}
+{{- if $litellm.serviceMonitor.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -16,6 +17,6 @@ spec:
       app.kubernetes.io/instance: {{ .Release.Name }}
   endpoints:
     - port: http
-      path: {{ if .Values.litellm.serviceMonitor }}{{ default "/metrics" .Values.litellm.serviceMonitor.path }}{{ else }}/metrics{{ end }}
+      path: {{ $litellm.serviceMonitor.path }}
       interval: 15s
-{{- end }}{{- end }}
+{{- end }}
