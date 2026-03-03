@@ -7,6 +7,9 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 data:
   config.yaml: |
+    litellm_settings:
+      success_callback: ["prometheus"]
+      failure_callback: ["prometheus"]
     model_list:
 {{- range .Values.backends }}
       - model_name: {{ .name }}

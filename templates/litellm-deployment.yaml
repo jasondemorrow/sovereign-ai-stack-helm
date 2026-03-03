@@ -54,16 +54,16 @@ spec:
                   {{- end }}
             {{- if .Values.postgresql.enabled }}
             - name: DATABASE_URL
-              value: "postgresql://app_user:{{ .Values.postgresql.auth.dbPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-pooler:5432/sovereign_ai"
+              value: "postgresql://app_user:{{ .Values.postgresql.auth.dbPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-rw:5432/sovereign_ai"
             {{- end }}
             {{- if .Values.litellm.extraEnv }}
             {{- toYaml .Values.litellm.extraEnv | nindent 12 }}
             {{- end }}
           # Assuming proper routing config is dynamically pulled or injected via configmap, 
           # otherwise, simple explicit routing pointing to our internal clusterIP service
+          command: ["/bin/sh", "-c"]
           args:
-            - "--config"
-            - "/config/config.yaml"
+            - "apt-get update && apt-get install -y libatomic1 || true; litellm --config /config/config.yaml"
           volumeMounts:
             - name: litellm-config
               mountPath: /config

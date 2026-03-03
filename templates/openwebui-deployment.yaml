@@ -51,7 +51,7 @@ spec:
                   optional: true
             {{- if .Values.postgresql.enabled }}
             - name: DATABASE_URL
-              value: "postgresql://app_user:{{ .Values.postgresql.auth.dbPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-pooler:5432/sovereign_ai"
+              value: "postgresql://app_user:{{ .Values.postgresql.auth.dbPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-rw:5432/sovereign_ai"
             - name: VECTOR_DB
               value: "pgvector"
             {{- end }}

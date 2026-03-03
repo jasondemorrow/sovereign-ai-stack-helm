@@ -41,7 +41,7 @@ spec:
     - to:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: {{ include "sovereign-ai-gateway.name" . }}-postgres
+              cnpg.io/cluster: {{ include "sovereign-ai-gateway.fullname" . }}-postgres
       ports:
         - protocol: TCP
           port: 5432
@@ -56,4 +56,8 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
+    # Allow Prisma remote downloads
+    - ports:
+        - protocol: TCP
+          port: 443
 {{- end }}

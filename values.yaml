@@ -16,6 +16,10 @@ litellm:
   extraEnv:
     - name: ENABLE_SSO
       value: "true"
+    - name: PROMETHEUS_METRICS
+      value: "True"
+    - name: LITELLM_LOG
+      value: "INFO"
     # Example: If the client uses Azure
     - name: AZURE_CLIENT_ID
       value: "placeholder-azure-client-id"
@@ -25,14 +29,12 @@ litellm:
     # - name: OKTA_DOMAIN
     #   value: "..."
 
-  podSecurityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
+  podSecurityContext: {}
     # fsGroup: 1000
 
   securityContext:
     allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: true
+    readOnlyRootFilesystem: false
     capabilities:
       drop:
       - ALL
@@ -43,7 +45,7 @@ litellm:
   probes:
     livenessProbe:
       httpGet:
-        path: /health
+        path: /health/readiness
         port: http
       initialDelaySeconds: 15
       periodSeconds: 20
@@ -80,7 +82,7 @@ sharedSecret:
   token: "sk-sovereign-ai-internal-admin-token"
 
 backends:
-  - name: "guardrail"
+  - name: "router"
     modelName: "facebook/opt-125m"
     device: "auto"
     replicaCount: 1
@@ -103,12 +105,10 @@ backends:
       size: 10Gi
       storageClass: ""
       accessMode: ReadWriteOnce
-    podSecurityContext:
-      runAsNonRoot: true
-      runAsUser: 1000
+    podSecurityContext: {}
     securityContext:
       allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
+      readOnlyRootFilesystem: false
       capabilities:
         drop:
         - ALL
@@ -146,7 +146,149 @@ backends:
               - key: app.kubernetes.io/name
                 operator: In
                 values:
-                - sovereign-ai-gateway-vllm-guardrail
+                - sovereign-ai-gateway-vllm-router
+            topologyKey: kubernetes.io/hostname
+    networkPolicy:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+      path: /metrics
+  - name: "summarize"
+    modelName: "Qwen/Qwen2.5-1.5B-Instruct"
+    device: "auto"
+    replicaCount: 1
+    image:
+      repository: vllm/vllm-openai
+      pullPolicy: IfNotPresent
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 8000
+    resources:
+      limits:
+        cpu: "2"
+        memory: "8Gi"
+      requests:
+        cpu: "1"
+        memory: "4Gi"
+    persistence:
+      enabled: false
+      size: 10Gi
+      storageClass: ""
+      accessMode: ReadWriteOnce
+    podSecurityContext: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+        - ALL
+    extraArgs: []
+    probes:
+      startupProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 60
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 15
+        periodSeconds: 20
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+    pdb:
+      create: true
+      minAvailable: 1
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - sovereign-ai-gateway-vllm-summarize
+            topologyKey: kubernetes.io/hostname
+    networkPolicy:
+      enabled: true
+    serviceMonitor:
+      enabled: true
+      path: /metrics
+  - name: "legal"
+    modelName: "Equall/SaulLM-7B"
+    device: "auto"
+    replicaCount: 1
+    image:
+      repository: vllm/vllm-openai
+      pullPolicy: IfNotPresent
+      tag: "latest"
+    service:
+      type: ClusterIP
+      port: 8000
+    resources:
+      limits:
+        cpu: "2"
+        memory: "8Gi"
+      requests:
+        cpu: "1"
+        memory: "4Gi"
+    persistence:
+      enabled: false
+      size: 10Gi
+      storageClass: ""
+      accessMode: ReadWriteOnce
+    podSecurityContext: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+        - ALL
+    extraArgs: []
+    probes:
+      startupProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 60
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 15
+        periodSeconds: 20
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+    pdb:
+      create: true
+      minAvailable: 1
+    affinity:
+      podAntiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - sovereign-ai-gateway-vllm-legal
             topologyKey: kubernetes.io/hostname
     networkPolicy:
       enabled: true
@@ -171,13 +313,13 @@ postgresql:
     size: 20Gi
     storageClass: ""
   networkPolicy:
-    enabled: true
+    enabled: false
 
 openwebui:
   enabled: true
   image:
     repository: ghcr.io/open-webui/open-webui
-    tag: "main"
+    tag: "v0.5.15"
     pullPolicy: IfNotPresent
   replicaCount: 1
   service:
@@ -197,17 +339,22 @@ openwebui:
     targetCPUUtilizationPercentage: 80
     targetMemoryUtilizationPercentage: 80
   networkPolicy:
-    enabled: true
-  podSecurityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
+    enabled: false
+  podSecurityContext: {}
   securityContext:
     allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: true
+    readOnlyRootFilesystem: false
     capabilities:
       drop:
       - ALL
   probes:
+    startupProbe:
+      httpGet:
+        path: /health
+        port: http
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      failureThreshold: 60
     livenessProbe:
       httpGet:
         path: /health
@@ -241,10 +388,14 @@ openwebui:
 
 observability:
   enabled: true
-  # Values propagated to the kube-prometheus-stack sub-chart
-  kube-prometheus-stack:
-    grafana:
-      enabled: true
-    prometheus:
-      prometheusSpec:
-        serviceMonitorSelectorNilUsesHelmValues: false
+
+# Values propagated to the kube-prometheus-stack sub-chart
+kube-prometheus-stack:
+  grafana:
+    enabled: false  # VictoriaMetrics stack provides the primary Grafana instance
+  prometheus:
+    prometheusSpec:
+      serviceMonitorSelectorNilUsesHelmValues: false
+      remoteWrite:
+      - url: "http://vmauth-victoria-metrics-auth.observability.svc.cluster.local:8427/api/v1/write"
+        bearerToken: "11111111-2222-3333-4444-555555555555"
