@@ -27,6 +27,21 @@ spec:
       affinity:
         {{- toYaml .Values.openwebui.affinity | nindent 8 }}
       {{- end }}
+      initContainers:
+        - name: init-db
+          image: "{{ .Values.openwebui.image.repository }}:{{ .Values.openwebui.image.tag }}"
+          imagePullPolicy: {{ .Values.openwebui.image.pullPolicy }}
+          command:
+            - /bin/bash
+            - -c
+            - "cd /app/backend/open_webui && PYTHONPATH=/app/backend alembic upgrade head"
+          env:
+            - name: WEBUI_SECRET_KEY
+              value: "init-migration-key"
+            {{- if .Values.postgresql.enabled }}
+            - name: DATABASE_URL
+              value: "postgresql://app_user:{{ .Values.postgresql.auth.dbPassword }}@{{ include "sovereign-ai-gateway.fullname" . }}-postgres-rw:5432/sovereign_ai"
+            {{- end }}
       containers:
         - name: openwebui
           image: "{{ .Values.openwebui.image.repository }}:{{ .Values.openwebui.image.tag }}"
