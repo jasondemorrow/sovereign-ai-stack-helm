@@ -1,0 +1,181 @@
+litellm:
+  replicaCount: 1
+  serviceMonitor:
+    enabled: true
+  probes:
+    livenessProbe:
+      httpGet:
+        path: /health/readiness
+        port: http
+      initialDelaySeconds: 15
+      periodSeconds: 20
+      timeoutSeconds: 8
+      failureThreshold: 5
+    readinessProbe:
+      httpGet:
+        path: /health/readiness
+        port: http
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 5
+
+backends:
+  - name: "router"
+    modelName: "hf://Qwen/Qwen2.5-0.5B-Instruct-GGUF/qwen2.5-0.5b-instruct-q4_k_m.gguf"
+    device: "none"
+    replicaCount: 1
+    image:
+      repository: ghcr.io/ggml-org/llama.cpp
+      tag: "server"
+    extraArgs:
+      - "--hf-repo"
+      - "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+      - "--hf-file"
+      - "qwen2.5-0.5b-instruct-q4_k_m.gguf"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--threads"
+      - "1"
+    resources:
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    service:
+      port: 8000
+    persistence:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+    networkPolicy:
+      enabled: true
+    pdb:
+      create: true
+      minAvailable: 1
+    probes:
+      startupProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 60
+      livenessProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 15
+        periodSeconds: 20
+      readinessProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 5
+        periodSeconds: 10
+  - name: "summarize"
+    modelName: "hf://Qwen/Qwen2.5-1.5B-Instruct-GGUF/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+    device: "none"
+    replicaCount: 1
+    image:
+      repository: ghcr.io/ggml-org/llama.cpp
+      tag: "server"
+    extraArgs:
+      - "--hf-repo"
+      - "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+      - "--hf-file"
+      - "qwen2.5-1.5b-instruct-q4_k_m.gguf"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--threads"
+      - "1"
+    resources:
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+    service:
+      port: 8000
+    persistence:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+    networkPolicy:
+      enabled: true
+    pdb:
+      create: true
+      minAvailable: 1
+    probes:
+      startupProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 60
+      livenessProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 15
+        periodSeconds: 20
+      readinessProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 5
+        periodSeconds: 10
+  - name: "legal"
+    modelName: "hf://tensorblock/Saul-7B-Instruct-v1-GGUF/Saul-7B-Instruct-v1-Q3_K_M.gguf"
+    device: "none"
+    replicaCount: 1
+    image:
+      repository: ghcr.io/ggml-org/llama.cpp
+      tag: "server"
+    extraArgs:
+      - "--hf-repo"
+      - "tensorblock/Saul-7B-Instruct-v1-GGUF"
+      - "--hf-file"
+      - "Saul-7B-Instruct-v1-Q3_K_M.gguf"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+      - "--threads"
+      - "2"
+    resources:
+      limits:
+        cpu: "2"
+        memory: "6Gi"
+      requests:
+        cpu: "500m"
+        memory: "4Gi"
+    service:
+      port: 8000
+    persistence:
+      enabled: false
+    serviceMonitor:
+      enabled: false
+    networkPolicy:
+      enabled: true
+    pdb:
+      create: true
+      minAvailable: 1
+    probes:
+      startupProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        failureThreshold: 60
+      livenessProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 15
+        periodSeconds: 20
+      readinessProbe:
+        httpGet: { path: /health, port: http }
+        initialDelaySeconds: 5
+        periodSeconds: 10
+
+postgresql:
+  persistence:
+    enabled: false
+
+openwebui:
+  persistence:
+    enabled: false
