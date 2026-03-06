@@ -71,6 +71,18 @@ spec:
             - name: VECTOR_DB
               value: "pgvector"
             {{- end }}
+            {{- if .Values.openwebui.defaultModel }}
+            - name: DEFAULT_MODELS
+              value: {{ .Values.openwebui.defaultModel | quote }}
+            {{- end }}
+            {{- if .Values.openwebui.modelFilter }}
+            {{- if .Values.openwebui.modelFilter.enabled }}
+            - name: ENABLE_MODEL_FILTER
+              value: "True"
+            - name: MODEL_FILTER_LIST
+              value: {{ .Values.openwebui.modelFilter.models | quote }}
+            {{- end }}
+            {{- end }}
           {{- if .Values.openwebui.probes }}
           {{- toYaml .Values.openwebui.probes | nindent 10 }}
           {{- end }}

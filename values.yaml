@@ -317,6 +317,13 @@ postgresql:
 
 openwebui:
   enabled: true
+  # The default model for new chats. Should be the router entry-point.
+  defaultModel: "router"
+  # When enabled, only the listed models appear in the UI dropdown.
+  # Users never see backend models — the router dispatches internally.
+  modelFilter:
+    enabled: true
+    models: "router"
   image:
     repository: ghcr.io/open-webui/open-webui
     tag: "v0.5.15"
